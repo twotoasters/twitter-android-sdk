@@ -67,6 +67,7 @@ public class ProfileImageView extends ImageView {
 		if (b.isDone()){
 			try {
 				setImageBitmap(b.get());
+				return;
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
