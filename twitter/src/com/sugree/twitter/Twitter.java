@@ -3,12 +3,13 @@ package com.sugree.twitter;
 import java.io.IOException;
 import java.net.MalformedURLException;
 
+import twitter4j.TwitterException;
 import twitter4j.TwitterFactory;
+import twitter4j.auth.AccessToken;
 import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.os.Handler;
 import android.util.Log;
 import android.webkit.CookieSyncManager;
 
@@ -29,33 +30,27 @@ public class Twitter {
 	protected static String OAUTH_ACCESS_TOKEN = "https://api.twitter.com/oauth/access_token";
 	protected static String OAUTH_AUTHORIZE = "https://api.twitter.com/oauth/authorize";
 	
-	private String mAccessToken = null;
-	private String mSecretToken = null;
+	private boolean accessTokenSet = false;
 	
 	private int mIcon;
 	private twitter4j.Twitter mTwitter;
 	
-	public Twitter(int icon) {
+	public Twitter(int icon, String consumerKey, String consumerSecret) {
 		mIcon = icon;
+	    mTwitter = new TwitterFactory().getInstance();
+	    mTwitter.setOAuthConsumer(consumerKey, consumerSecret);
 	}
 	
 	public void authorize(Context ctx,
-			Handler handler,
-			String consumerKey,
-			String consumerSecret,
 			final DialogListener listener) {
-		mTwitter = new TwitterFactory().getInstance();
-		mTwitter.setOAuthConsumer(
-				consumerKey, consumerSecret);
 		CookieSyncManager.createInstance(ctx);
-		dialog(ctx, handler, new DialogListener() {
+		dialog(ctx, new DialogListener() {
 
 			public void onComplete(Bundle values) {
 				CookieSyncManager.getInstance().sync();
-				setAccessToken(values.getString(ACCESS_TOKEN));
-				setSecretToken(values.getString(SECRET_TOKEN));
+				mTwitter.setOAuthAccessToken(new AccessToken(values.getString(ACCESS_TOKEN), values.getString(SECRET_TOKEN)));
 				if (isSessionValid()) {
-					Log.d(TAG, "token "+getAccessToken()+" "+getSecretToken());
+					Log.d(TAG, "token "+values.getString(ACCESS_TOKEN)+" "+values.getString(SECRET_TOKEN));
 					listener.onComplete(values);
 				} else {
 					onTwitterError(new TwitterError("failed to receive oauth token"));
@@ -85,7 +80,6 @@ public class Twitter {
 	}
 	
 	public void dialog(final Context ctx,
-			Handler handler,
 			final DialogListener listener) {
 		if (ctx.checkCallingOrSelfPermission(Manifest.permission.INTERNET) !=
 			PackageManager.PERMISSION_GRANTED) {
@@ -97,25 +91,26 @@ public class Twitter {
 	}
 	
 	public boolean isSessionValid() {
-		return getAccessToken() != null && getSecretToken() != null;
+		return accessTokenSet;
+	}
+
+	public void setOAuthAccessToken(String accessToken, String secretToken) {
+	    mTwitter.setOAuthAccessToken(new AccessToken(accessToken, secretToken));
+	    accessTokenSet = true;
 	}
 	
-	public String getAccessToken() {
-		return mAccessToken;
+	public void updateStatus(String statusString) {
+	    try {
+	        mTwitter.updateStatus(statusString);
+	    } catch (TwitterException e) {
+	        Log.e(TAG, e.toString());
+	    }
 	}
-
-	public void setAccessToken(String accessToken) {
-		mAccessToken = accessToken;
+	
+	public twitter4j.Twitter getTwitter() {
+	    return mTwitter;
 	}
-
-	public String getSecretToken() {
-		return mSecretToken;
-	}
-
-	public void setSecretToken(String secretToken) {
-		mSecretToken = secretToken;
-	}
-
+	
 	public static interface DialogListener {
 		public void onComplete(Bundle values);
 		public void onTwitterError(TwitterError e);
