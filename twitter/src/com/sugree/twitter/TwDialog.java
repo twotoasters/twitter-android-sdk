@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -22,12 +22,10 @@ import twitter4j.auth.RequestToken;
 import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Context;
-import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -150,9 +148,11 @@ public class TwDialog extends Dialog {
 					values.putString(Twitter.SECRET_TOKEN, at.getTokenSecret());
 					mListener.onComplete(values);
 				} catch (TwitterException e) {
+					e.printStackTrace();
 					mListener.onTwitterError(new TwitterError(e.getMessage()));
 				}
 				mHandler.post(new Runnable() {
+					@Override
 					public void run() {
 						mSpinner.dismiss();
 						TwDialog.this.dismiss();
@@ -186,10 +186,10 @@ public class TwDialog extends Dialog {
 				TwDialog.this.dismiss();
 				return true;
 			}
-			// launch non-dialog URLs in a full browser
+/*			// launch non-dialog URLs in a full browser
 			getContext().startActivity(
-					new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
-			return true;
+					new Intent(Intent.ACTION_VIEW, Uri.parse(url))); */
+			return false;
 		}
 
 		@Override

@@ -15,7 +15,7 @@ import android.webkit.CookieSyncManager;
 
 public class Twitter {
 	public static final String TAG = "twitter";
-	
+
 	public static final String CALLBACK_URI = "twitter://callback";
 	public static final String CANCEL_URI = "twitter://cancel";
 	public static final String ACCESS_TOKEN = "access_token";
@@ -25,30 +25,32 @@ public class Twitter {
 	public static final String AUTHORIZE = "authorize";
 
 	protected static String REQUEST_ENDPOINT = "https://api.twitter.com/1";
-	
+
 	protected static String OAUTH_REQUEST_TOKEN = "https://api.twitter.com/oauth/request_token";
 	protected static String OAUTH_ACCESS_TOKEN = "https://api.twitter.com/oauth/access_token";
 	protected static String OAUTH_AUTHORIZE = "https://api.twitter.com/oauth/authorize";
-	
+
 	private boolean accessTokenSet = false;
-	
+
 	private int mIcon;
 	private twitter4j.Twitter mTwitter;
-	
+
 	public Twitter(int icon, String consumerKey, String consumerSecret) {
 		mIcon = icon;
 	    mTwitter = new TwitterFactory().getInstance();
 	    mTwitter.setOAuthConsumer(consumerKey, consumerSecret);
 	}
-	
+
 	public void authorize(Context ctx,
 			final DialogListener listener) {
 		CookieSyncManager.createInstance(ctx);
 		dialog(ctx, new DialogListener() {
 
+			@Override
 			public void onComplete(Bundle values) {
 				CookieSyncManager.getInstance().sync();
-				mTwitter.setOAuthAccessToken(new AccessToken(values.getString(ACCESS_TOKEN), values.getString(SECRET_TOKEN)));
+				setOAuthAccessToken(values.getString(ACCESS_TOKEN), values.getString(SECRET_TOKEN));
+
 				if (isSessionValid()) {
 					Log.d(TAG, "token "+values.getString(ACCESS_TOKEN)+" "+values.getString(SECRET_TOKEN));
 					listener.onComplete(values);
@@ -57,28 +59,31 @@ public class Twitter {
 				}
 			}
 
+			@Override
 			public void onTwitterError(TwitterError e) {
 				Log.d(TAG, "Login failed: "+e);
 				listener.onTwitterError(e);
 			}
 
+			@Override
 			public void onError(DialogError e) {
 				Log.d(TAG, "Login failed: "+e);
 				listener.onError(e);
 			}
 
+			@Override
 			public void onCancel() {
 				Log.d(TAG, "Login cancelled");
 				listener.onCancel();
 			}
-			
+
 		});
 	}
-	
+
 	public String logout(Context context) throws MalformedURLException, IOException {
 		return "true";
 	}
-	
+
 	public void dialog(final Context ctx,
 			final DialogListener listener) {
 		if (ctx.checkCallingOrSelfPermission(Manifest.permission.INTERNET) !=
@@ -89,7 +94,7 @@ public class Twitter {
 		new TwDialog(ctx, mTwitter,
 				listener, mIcon).show();
 	}
-	
+
 	public boolean isSessionValid() {
 		return accessTokenSet;
 	}
@@ -98,7 +103,7 @@ public class Twitter {
 	    mTwitter.setOAuthAccessToken(new AccessToken(accessToken, secretToken));
 	    accessTokenSet = true;
 	}
-	
+
 	public void updateStatus(String statusString) {
 	    try {
 	        mTwitter.updateStatus(statusString);
@@ -106,11 +111,11 @@ public class Twitter {
 	        Log.e(TAG, e.toString());
 	    }
 	}
-	
+
 	public twitter4j.Twitter getTwitter() {
 	    return mTwitter;
 	}
-	
+
 	public static interface DialogListener {
 		public void onComplete(Bundle values);
 		public void onTwitterError(TwitterError e);
